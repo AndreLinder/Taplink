@@ -1,0 +1,235 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Andre Linder</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #4b0082, #004d99, #b8860b);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #fff;
+            overflow: hidden;
+            position: relative;
+        }
+
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(7px);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            position: relative;
+            z-index: 1;
+        }
+
+        .avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            margin: 0 auto 20px;
+            animation: pulse 2s ease-in-out infinite;
+            border: 3px solid rgba(255, 255, 255, 0.5);
+            overflow: hidden;
+        }
+
+        .avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        h1 {
+            font-size: 2em;
+            margin: 0.5em 0;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        p {
+            font-size: 1.1em;
+            margin: 0.5em 0;
+            opacity: 0.9;
+        }
+
+        .social-links {
+            margin-top: 20px;
+        }
+
+        .social-links a {
+            color: #fff;
+            opacity: 0.8;
+            text-decoration: none;
+            font-size: 1.5em;
+            margin: 0 15px;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+
+        .social-links a:hover {
+            transform: translateY(-5px);
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="container"></canvas>
+    <canvas id="blurCanvasBottom" style="display: none;"></canvas>
+
+    <div class="card">
+        <div class="avatar">
+            <img src="avatar.jpg" alt="Avatar">
+        </div>
+        <h1>Andre Linder</h1>
+        <p>Backend Developer</p>
+        <p>Email: al.andre.linder@gmail.com</p>
+        <div class="social-links">
+            <a href="https://t.me/andre_linder" title="Telegram"><i class="fab fa-telegram-plane"></i></a>
+            <a href="https://vk.com/andre_linder" title="VK"><i class="fab fa-vk"></i></a>
+            <a href="https://github.com/AndreLinder" title="GitHub"><i class="fab fa-github"></i></a>
+        </div>
+    </div>
+
+    <script>
+        var canvas = document.getElementById('container');
+        var clone = document.getElementById('blurCanvasBottom');
+
+        var cloneCtx = clone.getContext('2d');
+        var ctx = canvas.getContext('2d');
+
+        var ww = $(window).width();
+        var wh = $(window).height();
+        canvas.width = ww;
+        canvas.height = wh;
+        clone.width = ww;
+        clone.height = wh;
+        var partCount = 100;
+        var particles = [];
+
+        function particle() {
+            this.color = 'rgba(255,255,255,' + Math.random() + ')';
+            this.x = randomInt(0, ww);
+            this.y = randomInt(0, wh);
+            this.direction = {
+                "x": -1 + Math.random() * 2,
+                "y": -1 + Math.random() * 2
+            };
+            this.vx = 0.3 * Math.random();
+            this.vy = 0.3 * Math.random();
+            this.radius = randomInt(2, 3);
+            this.float = function() {
+                this.x += this.vx * this.direction.x;
+                this.y += this.vy * this.direction.y;
+            };
+            this.changeDirection = function(axis) {
+                this.direction[axis] *= -1;
+            };
+            this.boundaryCheck = function() {
+                if (this.x >= ww) {
+                    this.x = ww;
+                    this.changeDirection("x");
+                } else if (this.x <= 0) {
+                    this.x = 0;
+                    this.changeDirection("x");
+                }
+                if (this.y >= wh) {
+                    this.y = wh;
+                    this.changeDirection("y");
+                } else if (this.y <= 0) {
+                    this.y = 0;
+                    this.changeDirection("y");
+                }
+            };
+            this.draw = function() {
+                ctx.beginPath();
+                ctx.fillStyle = this.color;
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
+                ctx.fill();
+            };
+        }
+
+        function clearCanvas() {
+            cloneCtx.clearRect(0, 0, ww, wh);
+            ctx.clearRect(0, 0, ww, wh);
+        }
+
+        function createParticles() {
+            for (var i = 0; i < partCount; i++) {
+                var p = new particle();
+                particles.push(p);
+            }
+        }
+
+        function drawParticles() {
+            for (var i = 0; i < particles.length; i++) {
+                p = particles[i];
+                p.draw();
+            }
+        }
+
+        function updateParticles() {
+            for (var i = particles.length - 1; i >= 0; i--) {
+                p = particles[i];
+                p.float();
+                p.boundaryCheck();
+            }
+        }
+
+        createParticles();
+        drawParticles();
+
+        function animateParticles() {
+            clearCanvas();
+            drawParticles();
+            updateParticles();
+            cloneCtx.drawImage(canvas, 0, 0);
+            requestAnimationFrame(animateParticles);
+        }
+
+        requestAnimationFrame(animateParticles);
+        cloneCtx.drawImage(canvas, 0, 0);
+
+        $(window).on('resize', function() {
+            ww = $(window).width();
+            wh = $(window).height();
+            canvas.width = ww;
+            canvas.height = wh;
+            clone.width = ww;
+            clone.height = wh;
+            clearCanvas();
+            particles = [];
+            createParticles();
+            drawParticles();
+        });
+
+        function randomInt(min, max) {
+            return Math.floor(Math.random() * (max - min + 1) + min);
+        }
+
+        function velocityInt(min, max) {
+            return Math.random() * (max - min + 1) + min;
+        }
+    </script>
+</body>
+</html>
