@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>QR Animation</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+    }
+
+    #container {
+      position: relative;
+      width: 50px;
+      height: 50px;
+    }
+
+    .block {
+      position: absolute;
+      width: 15px;
+      height: 15px;
+      background: black;
+      border-radius: 2px;
+      transition: all 2s ease-in-out;
+    }
+
+    .fixed {
+      pointer-events: none;
+    }
+
+    .white {
+      background: white !important;
+    }
+  </style>
+</head>
+<body>
+  <div id="container"></div>
+
+  <script>
+    const container = document.getElementById('container');
+    const gridSize = 42;
+    const cellSize = 12;
+    const blocks = [];
+
+    const finderPatterns = [
+      { ox: 0, oy: 0, size: 7, centerSize: 3, whiteCenter: false },
+      { ox: gridSize - 7, oy: 0, size: 7, centerSize: 3, whiteCenter: false },
+      { ox: 0, oy: gridSize - 7, size: 7, centerSize: 3, whiteCenter: false },
+      { ox: gridSize - 5 - 2, oy: gridSize - 5 - 2, size: 5, centerSize: 1, whiteCenter: false }
+    ];
+
+    function isInReservedZone(x, y) {
+    if (
+  x <= 0 || y <= 0 ||
+  x >= gridSize - 1 || y >= gridSize - 1
+) return true;
+    
+      return finderPatterns.some(({ ox, oy, size }) =>
+        x >= ox - 1 && x < ox + size + 1 &&
+        y >= oy - 1 && y < oy + size + 1
+      );
+    }
+
+    function drawFinderPattern({ ox, oy, size, centerSize, whiteCenter }) {
+      const centerOffset = Math.floor((size - centerSize) / 2);
+
+      for (let y = 0; y < size; y++) {
+        for (let x = 0; x < size; x++) {
+          const inCenter =
+            x >= centerOffset && x < centerOffset + centerSize &&
+            y >= centerOffset && y < centerOffset + centerSize;
+
+          const isEdge = x === 0 || x === size - 1 || y === 0 || y === size - 1;
+
+          if (isEdge || inCenter) {
+            const dot = document.createElement('div');
+            dot.classList.add('block', 'fixed');
+            if (inCenter && whiteCenter) dot.classList.add('white');
+
+            dot.style.left = `${(ox + x) * cellSize}px`;
+            dot.style.top = `${(oy + y) * cellSize}px`;
+            container.appendChild(dot);
+          }
+        }
+      }
+    }
+
+    finderPatterns.forEach(drawFinderPattern);
+
+    // подвижные блоки
+    for (let y = 0; y < gridSize; y++) {
+      for (let x = 0; x < gridSize; x++) {
+        if (!isInReservedZone(x, y) && Math.random() < 0.5) {
+          const block = document.createElement('div');
+          block.classList.add('block');
+          block.dataset.gridX = x;
+          block.dataset.gridY = y;
+          block.style.left = `${x * cellSize}px`;
+          block.style.top = `${y * cellSize}px`;
+          container.appendChild(block);
+          blocks.push(block);
+        }
+      }
+    }
+
+    function moveBlocks() {
+      blocks.forEach(block => {
+        let x = parseInt(block.dataset.gridX);
+        let y = parseInt(block.dataset.gridY);
+
+        const directions = [
+          [0, -1], [1, 0], [0, 1], [-1, 0]
+        ];
+        const [dx, dy] = directions[Math.floor(Math.random() * directions.length)];
+
+        const nx = x + dx;
+        const ny = y + dy;
+
+        if (
+          nx >= 0 && ny >= 0 &&
+          nx < gridSize && ny < gridSize &&
+          !isInReservedZone(nx, ny)
+        ) {
+          block.dataset.gridX = nx;
+          block.dataset.gridY = ny;
+          block.style.left = `${nx * cellSize}px`;
+          block.style.top = `${ny * cellSize}px`;
+        }
+      });
+    }
+
+    setInterval(moveBlocks, 2500);
+  </script>
+</body>
+</html>
